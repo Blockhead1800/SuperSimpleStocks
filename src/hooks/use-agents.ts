@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { getAiClient, MODELS, AgentStatus, AnalysisResult } from "@/lib/gemini";
 import { Type } from "@google/genai";
+import { getFinnhubSnapshot, type FinnhubQuality } from "@/lib/finnhub";
 
 // Helper to clean and parse JSON from AI response
 function cleanAndParseJSON(text: string): any {
@@ -303,10 +304,12 @@ interface NormalizeOptions {
   gatheredData: string;
   isOwned: boolean;
   riskTolerance: number;
+  liveDataQuality: FinnhubQuality;
+  liveDataTimestamp?: string;
 }
 
 function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions): AnalysisResult {
-  const { symbol, gatheredData, isOwned, riskTolerance } = options;
+  const { symbol, gatheredData, isOwned, riskTolerance, liveDataQuality, liveDataTimestamp } = options;
   const fallbackSymbol = symbol.toUpperCase();
   const defaultRisk = clamp(Math.round(riskTolerance / 10) || 5, 1, 10);
   const condensedGatheredData = gatheredData.replace(/\s+/g, " ").trim();
@@ -342,18 +345,19 @@ function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions):
     : [];
 
   let sources = rawSources
-    .filter((source): source is { title?: unknown; url?: unknown; timestamp?: unknown } => typeof source === "object" && source !== null)
+    .filter((source) => typeof source === "object" && source !== null)
     .map((source) => {
-      const title = toTrimmedString(source.title, "Source");
-      const url = toTrimmedString(source.url, "");
-      const timestamp = isNonEmptyString(source.timestamp) ? source.timestamp.trim() : undefined;
+      const item = source as { title?: unknown; url?: unknown; timestamp?: unknown };
+      const title = toTrimmedString(item.title, "Source");
+      const url = toTrimmedString(item.url, "");
+      const timestamp = isNonEmptyString(item.timestamp) ? item.timestamp.trim() : undefined;
       return { title, url, timestamp };
     })
     .filter((source) => isValidHttpUrl(source.url));
 
   if (sources.length === 0) {
     const fallbackUrls = [...new Set(gatheredData.match(/https?:\/\/[^\s)]+/g) ?? [])].slice(0, 2);
-    sources = fallbackUrls.map((url, index) => ({ title: `Source ${index + 1}`, url }));
+    sources = fallbackUrls.map((url, index) => ({ title: `Source ${index + 1}`, url, timestamp: undefined }));
   }
 
   return {
@@ -407,6 +411,11 @@ function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions):
       sources,
     },
     timestamp: new Date().toISOString(),
+    liveData: {
+      provider: "Finnhub",
+      quality: liveDataQuality,
+      snapshotTime: liveDataTimestamp,
+    },
   };
 }
 
@@ -423,15 +432,26 @@ export function useMarketAgents() {
   ): Promise<AnalysisResult> => {
     const { isOwned = false } = options;
     const ai = getAiClient();
+    const finnhubSnapshot = await getFinnhubSnapshot(symbol);
+    const finnhubContext = finnhubSnapshot.asPromptBlock;
+    const finnhubAvailabilityNote = finnhubSnapshot.quality === "unavailable"
+      ? "Finnhub data unavailable for this run. Continue with reduced context and explicitly mark missing values as unavailable."
+      : "Finnhub data available. Use Finnhub values as the primary numeric source when present.";
     
     // 1. GATHER
     const gathererPrompt = `
       Find the current price, recent news (last 7 days), and key data for ${symbol}.
+      Finnhub Data:
+      ${finnhubContext}
       
       If ${symbol} is a STOCK: Get P/E, Market Cap, Analyst Ratings, and recent earnings.
       If ${symbol} is an ETF/INDEX (like VTI, SPY, QQQ): Get Top Holdings, Sector Allocation, Expense Ratio, and recent market sentiment.
       
       IMPORTANT: 
+      - Use Finnhub Data as primary numeric source.
+      - Prioritize Finnhub numbers for price, market cap, P/E, and related valuation metrics.
+      - If any Finnhub field is missing, explicitly say it is unavailable.
+      - ${finnhubAvailabilityNote}
       - Ignore any crypto or blockchain assets unless specifically asked for. Focus on the equity/fund.
       - YOU MUST FIND DATA. If specific metrics are unavailable, find the closest proxies (e.g. "Tech Sector" sentiment for QQQ).
       - Return a summary of the raw data.
@@ -447,8 +467,12 @@ export function useMarketAgents() {
     // 2. HISTORIAN
     const historianPrompt = `
       You are The Historian. Analyze data for ${symbol}:
+      Finnhub Data:
+      ${finnhubContext}
       ${gatheredData}
       Compare to historical trends. Risk tolerance: ${riskTolerance}/100.
+      Verify consistency with Finnhub Data before finalizing conclusions.
+      If a Finnhub value is missing, state unavailable explicitly.
       Provide detailed analysis.
     `;
     const historianResponse = await ai.models.generateContent({
@@ -460,12 +484,16 @@ export function useMarketAgents() {
     // 3. AUDITOR
     const auditorPrompt = `
       You are The Auditor. Fact-check this analysis for ${symbol}:
+      Finnhub Data:
+      ${finnhubContext}
       ${historicalContext}
       Raw Data: ${gatheredData}
       1. Check consistency.
+      1a. Verify numeric claims against Finnhub Data first.
       2. Verify sources.
       3. Remove hallucinations.
       4. NO CRYPTO.
+      5. If Finnhub fields are missing, mark them as unavailable rather than filling gaps.
       Provide vetted analysis.
     `;
     const auditorResponse = await ai.models.generateContent({
@@ -480,6 +508,7 @@ export function useMarketAgents() {
       
       Raw Data: ${gatheredData}
       Vetted Analysis: ${vettedAnalysis}
+      Finnhub Data: ${finnhubContext}
       Risk Tolerance: ${riskTolerance}/100
       User Owns Position: ${isOwned ? "YES" : "NO"}
 
@@ -498,7 +527,10 @@ export function useMarketAgents() {
       - Ensure sources are valid URLs.
       - OUTPUT PURE JSON ONLY. NO MARKDOWN. NO CODE BLOCKS.
       - Do NOT put JSON strings inside the summary or thesis fields. Write plain text.
-      - IF DATA IS MISSING: Make a best effort estimate or general statement based on the symbol's known sector/status. DO NOT LEAVE FIELDS EMPTY.
+      - Use Finnhub values when present.
+      - If a value is missing, write "unavailable" and lower confidence.
+      - Do not estimate numeric values unless explicitly marked as estimate.
+      - Never invent numbers; if missing, say missing.
 
       JSON Structure:
       {
@@ -561,7 +593,14 @@ export function useMarketAgents() {
     let result: AnalysisResult;
     try {
       const parsedResult = cleanAndParseJSON(synthesizerResponse.text);
-      result = normalizeAnalysisResult(parsedResult, { symbol, gatheredData, isOwned, riskTolerance });
+      result = normalizeAnalysisResult(parsedResult, {
+        symbol,
+        gatheredData,
+        isOwned,
+        riskTolerance,
+        liveDataQuality: finnhubSnapshot.quality,
+        liveDataTimestamp: finnhubSnapshot.snapshot?.fetchedAt,
+      });
     } catch (e) {
       console.error("Failed to parse synthesizer response", e);
       throw new Error(`Failed to parse analysis for ${symbol}`);

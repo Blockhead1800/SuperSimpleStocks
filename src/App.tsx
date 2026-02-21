@@ -13,6 +13,11 @@ import { AnalysisDisplay } from "@/components/analysis-display";
 import { PortfolioView, PortfolioItem } from "@/components/portfolio-view";
 import { useMarketAgents } from "@/hooks/use-agents";
 import { API_KEY_STORAGE_KEY } from "@/lib/gemini";
+import {
+  FINNHUB_API_KEY_STORAGE_KEY,
+  setFinnhubApiKey,
+  clearFinnhubApiKey,
+} from "@/lib/finnhub";
 import { cn } from "@/lib/utils";
 
 type View = "dashboard" | "portfolio" | "alerts" | "settings";
@@ -27,6 +32,9 @@ export default function App() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [apiKeySavedNotice, setApiKeySavedNotice] = useState("");
+  const [hasFinnhubKey, setHasFinnhubKey] = useState(false);
+  const [finnhubKeyInput, setFinnhubKeyInput] = useState("");
+  const [finnhubKeySavedNotice, setFinnhubKeySavedNotice] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [searchFrequency, setSearchFrequency] = useState<SearchFrequency>("24h");
   
@@ -46,8 +54,11 @@ export default function App() {
 
   useEffect(() => {
     const saved = window.localStorage.getItem(API_KEY_STORAGE_KEY)?.trim() || "";
+    const savedFinnhub = window.localStorage.getItem(FINNHUB_API_KEY_STORAGE_KEY)?.trim() || "";
     setHasApiKey(Boolean(saved));
     setApiKeyInput(saved);
+    setHasFinnhubKey(Boolean(savedFinnhub));
+    setFinnhubKeyInput(savedFinnhub);
   }, []);
 
   const saveApiKey = (e: React.FormEvent) => {
@@ -62,6 +73,27 @@ export default function App() {
     window.localStorage.removeItem(API_KEY_STORAGE_KEY);
     setHasApiKey(false);
     setApiKeySavedNotice("API key removed.");
+  };
+
+  const saveFinnhubKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedKey = finnhubKeyInput.trim();
+    if (trimmedKey) {
+      setFinnhubApiKey(trimmedKey);
+      setHasFinnhubKey(true);
+      setFinnhubKeySavedNotice("Finnhub API key saved.");
+      return;
+    }
+    clearFinnhubApiKey();
+    setHasFinnhubKey(false);
+    setFinnhubKeySavedNotice("Finnhub API key removed.");
+  };
+
+  const removeFinnhubKey = () => {
+    clearFinnhubApiKey();
+    setHasFinnhubKey(false);
+    setFinnhubKeyInput("");
+    setFinnhubKeySavedNotice("Finnhub API key removed.");
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -185,6 +217,16 @@ export default function App() {
               <Sparkles className="w-4 h-4 text-primary" />
               <span>Scan Market</span>
             </button>
+            <span
+              className={cn(
+                "px-3 py-2 rounded-full text-xs font-medium border whitespace-nowrap hidden md:inline-flex items-center",
+                hasFinnhubKey
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+                  : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
+              )}
+            >
+              {hasFinnhubKey ? "Finnhub connected" : "Finnhub not connected"}
+            </span>
           </div>
 
           <button
@@ -234,10 +276,9 @@ export default function App() {
                           <button
                             onClick={handleDiscovery}
                             className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                            disabled={status === "gathering"}
                           >
                             <Sparkles className="w-4 h-4" />
-                            {status === "gathering" ? "Scanning Stocks..." : "Find Stock Ideas"}
+                            Find Stock Ideas
                           </button>
                           <p className="text-xs text-center text-muted-foreground mt-2">
                             US stocks only (no crypto)
@@ -388,7 +429,7 @@ export default function App() {
 
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">API Key</h3>
+                        <h3 className="font-medium">Gemini API Key</h3>
                         <p className="text-sm text-muted-foreground">
                           {hasApiKey ? "Saved locally in this browser." : "No key saved yet."}
                         </p>
@@ -412,6 +453,55 @@ export default function App() {
                         </button>
                         {apiKeySavedNotice && (
                           <span className="text-xs text-muted-foreground">{apiKeySavedNotice}</span>
+                        )}
+                      </div>
+                    </form>
+
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div>
+                        <h3 className="font-medium">Finnhub API Key</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {hasFinnhubKey ? "Saved locally in this browser." : "No key saved yet."}
+                        </p>
+                      </div>
+                    </div>
+                    <form onSubmit={saveFinnhubKey} className="space-y-2">
+                      <input
+                        type="password"
+                        value={finnhubKeyInput}
+                        onChange={(e) => setFinnhubKeyInput(e.target.value)}
+                        placeholder="Paste your Finnhub API key"
+                        autoComplete="new-password"
+                        className="w-full bg-background border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Get a free key from{" "}
+                        <a
+                          href="https://finnhub.io/dashboard"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-primary"
+                        >
+                          finnhub.io/dashboard
+                        </a>
+                        . Stored only in this browser for local use.
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="submit"
+                          className="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:opacity-90"
+                        >
+                          Save Key
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeFinnhubKey}
+                          className="px-3 py-2 text-sm border rounded-md hover:bg-muted"
+                        >
+                          Remove Key
+                        </button>
+                        {finnhubKeySavedNotice && (
+                          <span className="text-xs text-muted-foreground">{finnhubKeySavedNotice}</span>
                         )}
                       </div>
                     </form>

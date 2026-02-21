@@ -47,6 +47,11 @@ export interface AnalysisResult {
     sources: { title: string; url: string; timestamp?: string }[];
   };
   timestamp: string;
+  liveData?: {
+    provider: "Finnhub";
+    quality: "ok" | "partial" | "unavailable";
+    snapshotTime?: string;
+  };
 }
 
 export interface MarketOpportunity {

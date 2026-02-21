@@ -53,7 +53,7 @@ export function ApiKeySelector({ onKeySelected }: ApiKeySelectorProps) {
         
         <h2 className="text-2xl font-bold mb-3">Connect Super Simple Stocks</h2>
         <p className="text-muted-foreground mb-8">
-          To run Super Simple Stocks with advanced reasoning and real-time search, connect your Gemini API key.
+          Connect your Gemini API key now. You can also add a Finnhub key in Settings for stronger live market data.
         </p>
 
         {error && (

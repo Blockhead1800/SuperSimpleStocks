@@ -10,7 +10,7 @@ interface AgentVisualizerProps {
 
 export function AgentVisualizer({ status }: AgentVisualizerProps) {
   const steps = [
-    { id: "gathering", label: "Step 1: Gather Data", icon: Search, description: "Checking live price action and news..." },
+    { id: "gathering", label: "Step 1: Gather Data", icon: Search, description: "Checking Finnhub market data, price action, and news..." },
     { id: "historian", label: "Step 2: Compare History", icon: BookOpen, description: "Looking for similar past setups..." },
     { id: "auditing", label: "Step 3: Verify Facts", icon: ShieldCheck, description: "Validating claims with trusted sources..." },
     { id: "synthesizing", label: "Step 4: Build a Plan", icon: FileText, description: "Creating a simple, clear stock view..." },
@@ -84,7 +84,7 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
                       exit={{ opacity: 0, height: 0 }}
                       className="mt-2 text-xs bg-muted/50 p-2 rounded border border-border font-mono"
                     >
-                      <span className="text-primary">Step_{index + 1}</span>: Reviewing market data...
+                      <span className="text-primary">Step_{index + 1}</span>: Checking Finnhub market data...
                     </motion.div>
                   )}
                 </AnimatePresence>
