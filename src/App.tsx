@@ -213,7 +213,7 @@ export default function App() {
                         Super Simple Stocks
                       </h1>
                       <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                        Beginner-friendly stock analysis in plain English, powered by a 4-step AI workflow.
+                        Beginner friendly stock analysis powered by a 4-step AI workflow.
                       </p>
                       
                       {!hasApiKey && (
