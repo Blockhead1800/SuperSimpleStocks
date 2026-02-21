@@ -1,6 +1,5 @@
 import * as React from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { CheckCircle2, Circle, Loader2, Search, BookOpen, ShieldCheck, FileText } from "lucide-react";
+import { CheckCircle2, Loader2, Search, BookOpen, ShieldCheck, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AgentStatus } from "@/lib/gemini";
 
@@ -10,10 +9,10 @@ interface AgentVisualizerProps {
 
 export function AgentVisualizer({ status }: AgentVisualizerProps) {
   const steps = [
-    { id: "gathering", label: "Step 1: Gather Data", icon: Search, description: "Checking Finnhub market data, price action, and news..." },
-    { id: "historian", label: "Step 2: Compare History", icon: BookOpen, description: "Looking for similar past setups..." },
-    { id: "auditing", label: "Step 3: Verify Facts", icon: ShieldCheck, description: "Validating claims with trusted sources..." },
-    { id: "synthesizing", label: "Step 4: Build a Plan", icon: FileText, description: "Creating a simple, clear stock view..." },
+    { id: "gathering", label: "Step 1: Gather", icon: Search, description: "Market data + recent headlines" },
+    { id: "historian", label: "Step 2: Compare", icon: BookOpen, description: "Check similar past patterns" },
+    { id: "auditing", label: "Step 3: Verify", icon: ShieldCheck, description: "Cross-check claims + sources" },
+    { id: "synthesizing", label: "Step 4: Build", icon: FileText, description: "Create final stock plan" },
   ];
 
   const getCurrentStepIndex = () => {
@@ -25,43 +24,42 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
   const currentIndex = getCurrentStepIndex();
 
   return (
-    <div className="w-full bg-card border rounded-xl p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Super Simple Stocks Analysis Steps</h3>
-      <div className="space-y-6">
+    <div className="w-full bg-card border rounded-xl p-4 shadow-sm">
+      <h3 className="text-sm font-semibold mb-3">Agent Progress</h3>
+      <div className="space-y-3">
         {steps.map((step, index) => {
           const isActive = index === currentIndex;
           const isCompleted = index < currentIndex;
-          const isPending = index > currentIndex;
 
           return (
-            <div key={step.id} className="relative flex items-start gap-4">
+            <div key={step.id} className="relative flex items-start gap-3">
               {/* Connector Line */}
               {index !== steps.length - 1 && (
                 <div className={cn(
-                  "absolute left-[15px] top-8 w-0.5 h-12 -z-10 transition-colors duration-500",
+                  "absolute left-[13px] top-7 w-0.5 h-7 -z-10 transition-colors duration-500",
                   isCompleted ? "bg-primary" : "bg-muted"
                 )} />
               )}
 
               <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300",
+                "w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300",
                 isActive ? "bg-primary text-primary-foreground" :
                 isCompleted ? "bg-primary text-primary-foreground" :
                 "bg-muted text-muted-foreground"
               )}>
                 {isActive ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : isCompleted ? (
-                  <CheckCircle2 className="w-5 h-5" />
+                  <CheckCircle2 className="w-4 h-4" />
                 ) : (
-                  <step.icon className="w-4 h-4" />
+                  <step.icon className="w-3.5 h-3.5" />
                 )}
               </div>
 
-              <div className="flex-1 pt-1">
+              <div className="flex-1 pt-0.5 min-w-0">
                 <div className="flex justify-between items-center">
                   <h4 className={cn(
-                    "font-medium text-sm transition-colors",
+                    "font-medium text-xs transition-colors",
                     isActive ? "text-primary" : 
                     isCompleted ? "text-foreground" : 
                     "text-muted-foreground"
@@ -69,25 +67,12 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
                     {step.label}
                   </h4>
                   {isActive && (
-                    <span className="text-xs text-primary animate-pulse font-medium">Working...</span>
+                    <span className="text-[10px] text-primary animate-pulse font-medium">Working</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-0.5 overflow-hidden [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]">
                   {step.description}
                 </p>
-                
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="mt-2 text-xs bg-muted/50 p-2 rounded border border-border font-mono"
-                    >
-                      <span className="text-primary">Step_{index + 1}</span>: Checking Finnhub market data...
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
           );

@@ -6,7 +6,7 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Moon, Sun, LayoutDashboard, PieChart, Settings, Bell, Menu, X, Sparkles } from "lucide-react";
+import { LayoutDashboard, PieChart, Settings, Bell, Menu, X, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { RiskSlider } from "@/components/risk-slider";
 import { AgentVisualizer } from "@/components/agent-visualizer";
 import { AnalysisDisplay } from "@/components/analysis-display";
@@ -35,8 +35,8 @@ export default function App() {
   const [hasFinnhubKey, setHasFinnhubKey] = useState(false);
   const [finnhubKeyInput, setFinnhubKeyInput] = useState("");
   const [finnhubKeySavedNotice, setFinnhubKeySavedNotice] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [searchFrequency, setSearchFrequency] = useState<SearchFrequency>("24h");
+  const [currentResultIndex, setCurrentResultIndex] = useState(0);
   
   // Portfolio State
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([
@@ -45,12 +45,8 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.add("dark");
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(API_KEY_STORAGE_KEY)?.trim() || "";
@@ -128,9 +124,62 @@ export default function App() {
     status === "historian" ||
     status === "auditing" ||
     status === "synthesizing";
+  const hasResults = results.length > 0;
+  const displayedResult = hasResults
+    ? results[Math.min(currentResultIndex, results.length - 1)]
+    : null;
+
+  const showPreviousResult = React.useCallback(() => {
+    if (results.length <= 1) return;
+    setCurrentResultIndex((prev) => (prev - 1 + results.length) % results.length);
+  }, [results.length]);
+
+  const showNextResult = React.useCallback(() => {
+    if (results.length <= 1) return;
+    setCurrentResultIndex((prev) => (prev + 1) % results.length);
+  }, [results.length]);
+
+  useEffect(() => {
+    setCurrentResultIndex(0);
+  }, [results.length, status]);
+
+  useEffect(() => {
+    if (
+      currentView !== "dashboard" ||
+      status !== "complete" ||
+      isAgentsRunning ||
+      results.length <= 1
+    ) {
+      return;
+    }
+
+    const handleKeyNavigation = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName;
+      if (
+        target?.isContentEditable ||
+        tagName === "INPUT" ||
+        tagName === "TEXTAREA" ||
+        tagName === "SELECT"
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        showPreviousResult();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        showNextResult();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyNavigation);
+    return () => window.removeEventListener("keydown", handleKeyNavigation);
+  }, [currentView, status, isAgentsRunning, results.length, showPreviousResult, showNextResult]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="h-screen overflow-hidden bg-background text-foreground flex">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -198,7 +247,7 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Header */}
         <header className="h-16 border-b bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-30">
           <button 
@@ -229,17 +278,13 @@ export default function App() {
             </span>
           </div>
 
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-full hover:bg-muted transition-colors ml-2"
-            title="Toggle Dark Mode"
-          >
-            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+        <div className={cn(
+          "flex-1 p-4 lg:p-8",
+          currentView === "dashboard" ? "overflow-hidden" : "overflow-y-auto"
+        )}>
           <div className="max-w-4xl mx-auto space-y-8">
             {currentView === "dashboard" && (
               <>
@@ -291,10 +336,10 @@ export default function App() {
 
                 {/* Active Analysis View */}
                 {(status !== "idle" || results.length > 0) && (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
                     {/* Left Column: Controls & Status */}
-                    <div className="space-y-6">
-                      <div className="bg-card border rounded-xl p-6 shadow-sm">
+                    <div className="space-y-4 min-h-0">
+                      <div className="bg-card border rounded-xl p-4 shadow-sm">
                         <RiskSlider 
                           value={riskTolerance} 
                           onChange={setRiskTolerance}
@@ -306,7 +351,7 @@ export default function App() {
                     </div>
 
                     {/* Right Column: Results */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 min-h-0">
                       {isAgentsRunning && (
                         <div className="rounded-xl border bg-card p-8 min-h-[320px] flex items-center justify-center text-center">
                           <p className="text-sm md:text-base text-muted-foreground max-w-xl">
@@ -327,22 +372,62 @@ export default function App() {
                         </div>
                       )}
 
-                      {results.length > 0 && status === "complete" && !isAgentsRunning && (
-                        <div className="space-y-8">
-                          {results.map((res) => (
-                            <motion.div
-                              key={res.symbol}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
+                      {hasResults && status === "complete" && !isAgentsRunning && displayedResult && (
+                        <div className="space-y-4">
+                          <div className="bg-card border rounded-xl px-4 py-3 flex items-center justify-between">
+                            <button
+                              onClick={showPreviousResult}
+                              disabled={results.length <= 1}
+                              className={cn(
+                                "inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors",
+                                results.length <= 1
+                                  ? "opacity-40 cursor-not-allowed"
+                                  : "hover:bg-muted"
+                              )}
+                              title="Previous stock (Left Arrow)"
                             >
-                              <AnalysisDisplay
-                                result={res}
-                                isOwned={portfolio.some(
-                                  (item) => item.symbol.toUpperCase() === res.symbol.toUpperCase()
-                                )}
-                              />
-                            </motion.div>
-                          ))}
+                              <ChevronLeft className="w-4 h-4" />
+                              <span className="hidden sm:inline">Prev</span>
+                            </button>
+
+                            <div className="text-center">
+                              <div className="text-xs sm:text-sm font-semibold tracking-wide">
+                                {displayedResult.symbol}
+                              </div>
+                              <div className="text-[11px] sm:text-xs text-muted-foreground">
+                                {currentResultIndex + 1} of {results.length}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={showNextResult}
+                              disabled={results.length <= 1}
+                              className={cn(
+                                "inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors",
+                                results.length <= 1
+                                  ? "opacity-40 cursor-not-allowed"
+                                  : "hover:bg-muted"
+                              )}
+                              title="Next stock (Right Arrow)"
+                            >
+                              <span className="hidden sm:inline">Next</span>
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <motion.div
+                            key={displayedResult.symbol}
+                            initial={{ opacity: 0, x: 12 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <AnalysisDisplay
+                              result={displayedResult}
+                              isOwned={portfolio.some(
+                                (item) => item.symbol.toUpperCase() === displayedResult.symbol.toUpperCase()
+                              )}
+                            />
+                          </motion.div>
                         </div>
                       )}
                     </div>
@@ -406,25 +491,6 @@ export default function App() {
                         <option value="1w">Weekly</option>
                         <option value="never">Never (Manual Only)</option>
                       </select>
-                    </div>
-
-                    <div className="flex items-center justify-between pb-6 border-b">
-                      <div>
-                        <h3 className="font-medium">Dark Mode</h3>
-                        <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
-                      </div>
-                      <button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        className={cn(
-                          "w-12 h-6 rounded-full transition-colors relative",
-                          isDarkMode ? "bg-primary" : "bg-muted"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-4 h-4 bg-white rounded-full absolute top-1 transition-all",
-                          isDarkMode ? "left-7" : "left-1"
-                        )} />
-                      </button>
                     </div>
 
                     <div className="flex items-center justify-between">
