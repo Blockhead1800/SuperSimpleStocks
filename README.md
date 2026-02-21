@@ -15,8 +15,5 @@ View your app in AI Studio: https://ai.studio/apps/55e64d4f-f264-4fb6-82c5-4ded3
 
 1. Install dependencies:
    `npm install`
-2. Create `.env.local` in `lumina-finance/` and set either:
-   - `GEMINI_API_KEY=...` (preferred), or
-   - `VITE_GEMINI_API_KEY=...` (also supported)
-3. Run the app:
+2. Run the app:
    `npm run dev`
