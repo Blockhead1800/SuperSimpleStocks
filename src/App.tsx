@@ -110,9 +110,9 @@ export default function App() {
         <div className="p-6 border-b">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">L</span>
+              <span className="text-primary-foreground font-bold text-sm">SSS</span>
             </div>
-            <span className="font-bold text-xl tracking-tight">Lumina</span>
+            <span className="font-bold text-xl tracking-tight">Super Simple Stocks</span>
           </div>
         </div>
         
@@ -206,10 +206,10 @@ export default function App() {
                   >
                     <div className="text-center py-8">
                       <h1 className="text-4xl font-bold tracking-tight mb-4">
-                        Institutional-Grade AI Analysis
+                        Super Simple Stocks
                       </h1>
                       <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                        Our 4-agent autonomous pipeline gathers, analyzes, audits, and synthesizes real-time data for you.
+                        Beginner-friendly stock analysis in plain English, powered by a 4-step AI workflow.
                       </p>
                       
                       {!hasApiKey && (
@@ -233,10 +233,10 @@ export default function App() {
                             disabled={status === "gathering"}
                           >
                             <Sparkles className="w-4 h-4" />
-                            {status === "gathering" ? "Scanning Market..." : "Auto-Scan for Opportunities"}
+                            {status === "gathering" ? "Scanning Stocks..." : "Find Stock Ideas"}
                           </button>
                           <p className="text-xs text-center text-muted-foreground mt-2">
-                            Find trending stocks (No Crypto)
+                            US stocks only (no crypto)
                           </p>
                         </div>
                       </div>
@@ -333,7 +333,7 @@ export default function App() {
                 <div className="bg-card border rounded-xl p-6 shadow-sm">
                   <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                     <Settings className="w-5 h-5" />
-                    Application Settings
+                    Super Simple Stocks Settings
                   </h2>
                   
                   <div className="space-y-6">
@@ -358,7 +358,7 @@ export default function App() {
                     <div className="flex items-center justify-between pb-6 border-b">
                       <div>
                         <h3 className="font-medium">Dark Mode</h3>
-                        <p className="text-sm text-muted-foreground">Toggle application theme</p>
+                        <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
                       </div>
                       <button
                         onClick={() => setIsDarkMode(!isDarkMode)}
@@ -387,7 +387,7 @@ export default function App() {
                         type="password"
                         value={apiKeyInput}
                         onChange={(e) => setApiKeyInput(e.target.value)}
-                        placeholder="Paste Gemini API key"
+                        placeholder="Paste your Gemini API key"
                         autoComplete="new-password"
                         className="w-full bg-background border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                       />

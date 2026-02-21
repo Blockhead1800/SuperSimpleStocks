@@ -51,9 +51,9 @@ export function ApiKeySelector({ onKeySelected }: ApiKeySelectorProps) {
           <Key className="w-8 h-8 text-primary" />
         </div>
         
-        <h2 className="text-2xl font-bold mb-3">Connect Google Cloud</h2>
+        <h2 className="text-2xl font-bold mb-3">Connect Super Simple Stocks</h2>
         <p className="text-muted-foreground mb-8">
-          To use the advanced <strong>Gemini 3 Pro</strong> model with real-time Google Search capabilities, you need to connect a paid Google Cloud project API key.
+          To run Super Simple Stocks with advanced reasoning and real-time search, connect your Gemini API key.
         </p>
 
         {error && (
@@ -68,7 +68,7 @@ export function ApiKeySelector({ onKeySelected }: ApiKeySelectorProps) {
           disabled={isLoading}
           className="w-full py-3 px-4 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isLoading ? "Connecting..." : "Select API Key"}
+          {isLoading ? "Connecting..." : "Choose API Key"}
         </button>
         
         <p className="text-xs text-muted-foreground mt-6">

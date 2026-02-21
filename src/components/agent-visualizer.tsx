@@ -10,10 +10,10 @@ interface AgentVisualizerProps {
 
 export function AgentVisualizer({ status }: AgentVisualizerProps) {
   const steps = [
-    { id: "gathering", label: "The Gatherer", icon: Search, description: "Scraping live technicals & news..." },
-    { id: "historian", label: "The Historian", icon: BookOpen, description: "Mapping historical correlations..." },
-    { id: "auditing", label: "The Auditor", icon: ShieldCheck, description: "Fact-checking & verifying sources..." },
-    { id: "synthesizing", label: "The Synthesizer", icon: FileText, description: "Structuring investment thesis..." },
+    { id: "gathering", label: "Step 1: Gather Data", icon: Search, description: "Checking live price action and news..." },
+    { id: "historian", label: "Step 2: Compare History", icon: BookOpen, description: "Looking for similar past setups..." },
+    { id: "auditing", label: "Step 3: Verify Facts", icon: ShieldCheck, description: "Validating claims with trusted sources..." },
+    { id: "synthesizing", label: "Step 4: Build a Plan", icon: FileText, description: "Creating a simple, clear stock view..." },
   ];
 
   const getCurrentStepIndex = () => {
@@ -26,7 +26,7 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
 
   return (
     <div className="w-full bg-card border rounded-xl p-6 shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Multi-Agent Analysis Pipeline</h3>
+      <h3 className="text-lg font-semibold mb-4">Super Simple Stocks Analysis Steps</h3>
       <div className="space-y-6">
         {steps.map((step, index) => {
           const isActive = index === currentIndex;
@@ -69,7 +69,7 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
                     {step.label}
                   </h4>
                   {isActive && (
-                    <span className="text-xs text-primary animate-pulse font-medium">Processing...</span>
+                    <span className="text-xs text-primary animate-pulse font-medium">Working...</span>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -84,7 +84,7 @@ export function AgentVisualizer({ status }: AgentVisualizerProps) {
                       exit={{ opacity: 0, height: 0 }}
                       className="mt-2 text-xs bg-muted/50 p-2 rounded border border-border font-mono"
                     >
-                      <span className="text-primary">Agent_{index + 1}</span>: Analyzing data vectors...
+                      <span className="text-primary">Step_{index + 1}</span>: Reviewing market data...
                     </motion.div>
                   )}
                 </AnimatePresence>

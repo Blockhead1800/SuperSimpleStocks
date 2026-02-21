@@ -57,14 +57,14 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
               </span>
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Analyzed at {new Date(result.timestamp).toLocaleTimeString()}
+              Updated at {new Date(result.timestamp).toLocaleTimeString()}
             </p>
           </div>
           <div className={cn(
             "flex flex-col items-center px-4 py-2 rounded-lg border",
             getRecommendationColor(displayRecommendation)
           )}>
-            <span className="text-xs font-bold uppercase tracking-wider opacity-80">Recommendation</span>
+            <span className="text-xs font-bold uppercase tracking-wider opacity-80">SSS Call</span>
             <div className="flex items-center gap-1">
               <RecIcon className="w-5 h-5" />
               <span className="text-xl font-black tracking-tight">{displayRecommendation}</span>
@@ -116,8 +116,8 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
           className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <span className="font-semibold">Pro Analysis</span>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Institutional Grade</span>
+            <span className="font-semibold">Advanced Analysis</span>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Deeper Research</span>
           </div>
           {showPro ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
@@ -135,7 +135,7 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
                 <div>
                   <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">Investment Thesis</h4>
                   <p className="text-sm leading-relaxed whitespace-pre-line">
-                    {result.proView?.thesis || "Detailed thesis not available."}
+                    {result.proView?.thesis || "Detailed reasoning is not available yet."}
                   </p>
                 </div>
 
@@ -151,7 +151,7 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
                         </li>
                       )) : (
                         <li className="text-sm text-muted-foreground italic">
-                          No technical indicator details were provided.
+                          No technical indicator details yet.
                         </li>
                       )}
                     </ul>
@@ -166,7 +166,7 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
                         </li>
                       )) : (
                         <li className="text-sm text-muted-foreground italic">
-                          No fundamental ratio details were provided.
+                          No fundamental ratio details yet.
                         </li>
                       )}
                     </ul>
@@ -185,7 +185,7 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
                         </li>
                       )) : (
                         <li className="text-sm text-muted-foreground italic">
-                          No historical correlation details were provided.
+                          No historical correlation details yet.
                         </li>
                       )}
                     </ul>
@@ -222,7 +222,7 @@ export function AnalysisDisplay({ result, isOwned = false }: AnalysisDisplayProp
                     </div>
                   ) : (
                     <div className="text-sm text-muted-foreground italic">
-                      No verified sources were provided for this run.
+                      No verified sources were included in this run.
                     </div>
                   )}
                 </div>
