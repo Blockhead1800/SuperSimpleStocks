@@ -91,6 +91,11 @@ export default function App() {
   const removeFromPortfolio = (id: string) => {
     setPortfolio(portfolio.filter(item => item.id !== id));
   };
+  const isAgentsRunning =
+    status === "gathering" ||
+    status === "historian" ||
+    status === "auditing" ||
+    status === "synthesizing";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
@@ -194,7 +199,6 @@ export default function App() {
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="max-w-4xl mx-auto space-y-8">
-            
             {currentView === "dashboard" && (
               <>
                 {/* Intro / Empty State */}
@@ -262,6 +266,14 @@ export default function App() {
 
                     {/* Right Column: Results */}
                     <div className="lg:col-span-2 space-y-6">
+                      {isAgentsRunning && (
+                        <div className="rounded-xl border bg-card p-8 min-h-[320px] flex items-center justify-center text-center">
+                          <p className="text-sm md:text-base text-muted-foreground max-w-xl">
+                            Thanks for watching the ad while the agents are working to keep the app free and accessible to all.
+                          </p>
+                        </div>
+                      )}
+
                       {error && (
                         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-lg flex items-center gap-3">
                           <div className="p-2 bg-destructive/10 rounded-full">
@@ -274,7 +286,7 @@ export default function App() {
                         </div>
                       )}
 
-                      {results.length > 0 && status === "complete" && (
+                      {results.length > 0 && status === "complete" && !isAgentsRunning && (
                         <div className="space-y-8">
                           {results.map((res) => (
                             <motion.div
