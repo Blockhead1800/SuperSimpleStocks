@@ -37,6 +37,10 @@ function cleanAndParseJSON(text: string): any {
   }
 }
 
+function getResponseText(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 function normalizeTickerSymbol(symbol: string): string {
   return symbol.trim().toUpperCase();
 }
@@ -312,7 +316,8 @@ function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions):
   const { symbol, gatheredData, isOwned, riskTolerance, liveDataQuality, liveDataTimestamp } = options;
   const fallbackSymbol = symbol.toUpperCase();
   const defaultRisk = clamp(Math.round(riskTolerance / 10) || 5, 1, 10);
-  const condensedGatheredData = gatheredData.replace(/\s+/g, " ").trim();
+  const gatheredDataText = typeof gatheredData === "string" ? gatheredData : "";
+  const condensedGatheredData = gatheredDataText.replace(/\s+/g, " ").trim();
 
   const result = typeof rawResult === "object" && rawResult !== null
     ? rawResult as Partial<AnalysisResult>
@@ -328,7 +333,7 @@ function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions):
 
   const parsedPrice = typeof result.price === "number" && Number.isFinite(result.price) && result.price > 0
     ? result.price
-    : extractPriceFromText(gatheredData);
+    : extractPriceFromText(gatheredDataText);
   const confidence = clamp(Math.round(typeof result.confidence === "number" ? result.confidence : 55), 1, 100);
   const riskLevel = clamp(Math.round(typeof result.riskLevel === "number" ? result.riskLevel : defaultRisk), 1, 10);
   const summarySource = [
@@ -356,7 +361,7 @@ function normalizeAnalysisResult(rawResult: unknown, options: NormalizeOptions):
     .filter((source) => isValidHttpUrl(source.url));
 
   if (sources.length === 0) {
-    const fallbackUrls = [...new Set(gatheredData.match(/https?:\/\/[^\s)]+/g) ?? [])].slice(0, 2);
+    const fallbackUrls = [...new Set(gatheredDataText.match(/https?:\/\/[^\s)]+/g) ?? [])].slice(0, 2);
     sources = fallbackUrls.map((url, index) => ({ title: `Source ${index + 1}`, url, timestamp: undefined }));
   }
 
@@ -462,7 +467,7 @@ export function useMarketAgents() {
       contents: gathererPrompt,
       config: { tools: [{ googleSearch: {} }] },
     });
-    const gatheredData = gathererResponse.text;
+    const gatheredData = getResponseText(gathererResponse.text) || "No gathered data was returned.";
 
     // 2. HISTORIAN
     const historianPrompt = `
@@ -479,7 +484,7 @@ export function useMarketAgents() {
       model: MODELS.HISTORIAN,
       contents: historianPrompt,
     });
-    const historicalContext = historianResponse.text;
+    const historicalContext = getResponseText(historianResponse.text) || "No historical context was returned.";
 
     // 3. AUDITOR
     const auditorPrompt = `
@@ -500,7 +505,7 @@ export function useMarketAgents() {
       model: MODELS.AUDITOR,
       contents: auditorPrompt,
     });
-    const vettedAnalysis = auditorResponse.text;
+    const vettedAnalysis = getResponseText(auditorResponse.text) || "No vetted analysis was returned.";
 
     // 4. SYNTHESIZER
     const synthesizerPrompt = `
@@ -590,9 +595,21 @@ export function useMarketAgents() {
       },
     });
 
+    const synthesizerText = getResponseText(synthesizerResponse.text);
+    if (!synthesizerText.trim()) {
+      throw new Error(`Synthesizer returned an empty response for ${symbol}`);
+    }
+
+    let parsedResult: unknown;
+    try {
+      parsedResult = cleanAndParseJSON(synthesizerText);
+    } catch (e) {
+      console.error("Failed to parse synthesizer JSON", e);
+      throw new Error(`Failed to parse analysis JSON for ${symbol}`);
+    }
+
     let result: AnalysisResult;
     try {
-      const parsedResult = cleanAndParseJSON(synthesizerResponse.text);
       result = normalizeAnalysisResult(parsedResult, {
         symbol,
         gatheredData,
@@ -602,8 +619,8 @@ export function useMarketAgents() {
         liveDataTimestamp: finnhubSnapshot.snapshot?.fetchedAt,
       });
     } catch (e) {
-      console.error("Failed to parse synthesizer response", e);
-      throw new Error(`Failed to parse analysis for ${symbol}`);
+      console.error("Failed to normalize analysis result", e);
+      throw new Error(`Failed to normalize analysis for ${symbol}`);
     }
     return result;
   };
