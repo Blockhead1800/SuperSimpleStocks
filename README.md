@@ -28,16 +28,3 @@ This contains everything you need to run the app locally.
 
 - API keys are stored in browser local storage on your machine.
 - The app uses Finnhub directly from the browser for snapshot data (quote/profile/financials/news/earnings).
-- For production apps, prefer a backend proxy so secrets are never exposed to end users.
-
-## Finnhub Behavior
-
-- If Finnhub is healthy, UI shows `Live data: Finnhub`.
-- If Finnhub is partial, analysis still runs and missing fields are marked unavailable.
-- If Finnhub is unavailable, analysis still runs with reduced context and UI shows `Using reduced context`.
-
-## Troubleshooting
-
-- `401` from Finnhub: key is invalid, expired, or missing.
-- `429` from Finnhub: rate limit reached; retry after a short wait.
-- Partial data for a symbol: one or more Finnhub endpoints returned empty/missing fields; the pipeline continues with explicit uncertainty.
