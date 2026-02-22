@@ -19,6 +19,7 @@ import {
   clearFinnhubApiKey,
 } from "@/lib/finnhub";
 import { cn } from "@/lib/utils";
+import brandIcon from "../Icon/Icon.png";
 
 type View = "dashboard" | "portfolio" | "alerts" | "settings";
 type SearchFrequency = "12h" | "24h" | "3d" | "1w" | "never";
@@ -194,11 +195,12 @@ export default function App() {
         isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="p-6 border-b">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">SSS</span>
-            </div>
-            <span className="font-bold text-xl tracking-tight">Super Simple Stocks</span>
+          <div className="flex items-center justify-center">
+            <img
+              src={brandIcon}
+              alt="Super Simple Stocks logo"
+              className="w-48 h-22 rounded-xl object-cover"
+            />
           </div>
         </div>
         
